@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Juego del Ahorcado (Google Sheets)</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; }
+    #palabra { font-size: 2em; letter-spacing: 10px; margin: 20px; }
+    #letras button { margin: 3px; }
+  </style>
+</head>
+<body>
+
+  <h1>Ahorcado Web</h1>
+  <label>Jugador: <input id="jugador" /></label>
+  <div id="palabra">Cargando...</div>
+  <div id="letras"></div>
+  <p>Intentos restantes: <span id="intentos">6</span></p>
+  <p id="resultado"></p>
+
+  <script>
+    const apiUrl = "https://script.google.com/macros/s/AKfycbzZOSRrwhnKd-TqJniXsoRXujgmpfoMVeys9Qs9sDN4gaBsp_nwJY2pfVxFE4wNE8i7/exec";
+    let palabra = "", oculta = [], intentos = 6;
+
+    fetch(apiUrl)
+      .then(res => res.json())
+      .then(data => {
+        palabra = data.palabra.toLowerCase();
+        oculta = Array(palabra.length).fill("_");
+        document.getElementById("palabra").textContent = oculta.join(" ");
+        crearLetras();
+      });
+
+    function crearLetras() {
+      const letras = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
+      const cont = document.getElementById("letras");
+      letras.split("").forEach(letra => {
+        const btn = document.createElement("button");
+        btn.textContent = letra;
+        btn.onclick = () => jugar(letra.toLowerCase(), btn);
+        cont.appendChild(btn);
+      });
+    }
+
+    function jugar(letra, btn) {
+      btn.disabled = true;
+      let acierto = false;
+
+      palabra.split("").forEach((l, i) => {
+        if (l === letra) {
+          oculta[i] = letra;
+          acierto = true;
+        }
+      });
+
+      document.getElementById("palabra").textContent = oculta.join(" ");
+
+      if (!acierto) {
+        intentos--;
+        document.getElementById("intentos").textContent = intentos;
+      }
+
+      verificarFin();
+    }
+
+    function verificarFin() {
+      if (!oculta.includes("_")) finalizar("Ganaste");
+      if (intentos <= 0) finalizar("Perdiste");
+    }
+
+    function finalizar(resultado) {
+      document.getElementById("resultado").textContent = resultado;
+      document.querySelectorAll("#letras button").forEach(b => b.disabled = true);
+
+      fetch(apiUrl, {
+        method: "POST",
+        body: JSON.stringify({
+          jugador: document.getElementById("jugador").value || "Anónimo",
+          palabra: palabra,
+          resultado: resultado
+        }),
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+  </script>
+</body>
+</html>
