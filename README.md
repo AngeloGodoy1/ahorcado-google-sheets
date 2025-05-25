@@ -1,1 +1,0 @@
-# ahorcado-google-sheets
