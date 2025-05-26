@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Juego Ahorcado - Hangman</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #f4f4f9;
+      font-family: 'Montserrat', sans-serif;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      font-weight: 700;
+      font-size: 3rem;
+      letter-spacing: 2px;
+      margin: 0;
+      text-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    #game-container {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.25);
+      width: 320px;
+      padding: 25px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #word {
+      font-size: 2.5rem;
+      letter-spacing: 12px;
+      margin-bottom: 25px;
+      font-weight: 700;
+      user-select: none;
+    }
+
+    #alphabet {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .letter-button {
+      background-color: #8e44ad;
+      border: none;
+      color: #f4f4f9;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 12px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      user-select: none;
+      width: 40px;
+      height: 48px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+
+    .letter-button:hover:not(:disabled) {
+      background-color: #9b59b6;
+    }
+
+    .letter-button:disabled {
+      background-color: #ccc;
+      color: #666;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    #hangman-figure {
+      width: 180px;
+      height: 240px;
+      margin-bottom: 20px;
+    }
+
+    #message {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #fff;
+      min-height: 30px;
+      margin-bottom: 15px;
+      text-align: center;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.7);
+    }
+
+    button#restart {
+      background-color: #27ae60;
+      border: none;
+      color: white;
+      font-weight: 700;
+      font-size: 1.1rem;
+      padding: 10px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+      transition: background-color 0.3s ease;
+      user-select: none;
+      width: 100%;
+    }
+
+    button#restart:hover {
+      background-color: #2ecc71;
+    }
+
+    footer {
+      margin-top: auto;
+      font-size: 0.9rem;
+      color: #ddd;
+      text-align: center;
+      padding: 10px 0;
+      width: 100%;
+    }
+
+    a {
+      color: #f39c12;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Juego Ahorcado</h1>
+    <p>¡Adivina la palabra!</p>
+  </header>
+
+  <main id="game-container">
+    <svg id="hangman-figure" viewBox="0 0 100 125" >
+      <!-- Base -->
+      <line x1="10" y1="120" x2="90" y2="120" stroke="#f4f4f9" stroke-width="4" />
+      <!-- Pole -->
+      <line x1="30" y1="120" x2="30" y2="10" stroke="#f4f4f9" stroke-width="4" />
+      <!-- Beam -->
+      <line x1="30" y1="10" x2="70" y2="10" stroke="#f4f4f9" stroke-width="4" />
+      <!-- Rope -->
+      <line x1="70" y1="10" x2="70" y2="25" stroke="#f4f4f9" stroke-width="3" />
+      <!-- Head -->
+      <circle id="head" cx="70" cy="35" r="10" stroke="#f4f4f9" stroke-width="3" fill="none" visibility="hidden"/>
+      <!-- Body -->
+      <line id="body" x1="70" y1="45" x2="70" y2="80" stroke="#f4f4f9" stroke-width="3" visibility="hidden"/>
+      <!-- Left Arm -->
+      <line id="left-arm" x1="70" y1="50" x2="50" y2="65" stroke="#f4f4f9" stroke-width="3" visibility="hidden"/>
+      <!-- Right Arm -->
+      <line id="right-arm" x1="70" y1="50" x2="90" y2="65" stroke="#f4f4f9" stroke-width="3" visibility="hidden"/>
+      <!-- Left Leg -->
+      <line id="left-leg" x1="70" y1="80" x2="50" y2="110" stroke="#f4f4f9" stroke-width="3" visibility="hidden"/>
+      <!-- Right Leg -->
+      <line id="right-leg" x1="70" y1="80" x2="90" y2="110" stroke="#f4f4f9" stroke-width="3" visibility="hidden"/>
+    </svg>
+
+    <div id="word" aria-label="Palabra a adivinar"></div>
+    <div id="alphabet" role="application" aria-label="Teclado con letras para adivinar"></div>
+    <div id="message" aria-live="polite"></div>
+    <button id="restart">Reiniciar Juego</button>
+  </main>
+
+
+  <script>
+    (() => {
+      const sheetPublicJSONUrl = 'https://script.google.com/macros/s/AKfycbx9YTpQ8CQtmq9arO17jEs4NI66OVDsvOdjxcuKNyA0WL-EmatnMpbBmgQuW1I4YFGB/exec';
+
+      // Simple Spanish alphabet letters array
+      const alphabet = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ'.split('');
+      let words = [];
+      let word = '';
+      let guessedLetters = new Set();
+      let wrongGuesses = 0;
+      const maxWrongGuesses = 6;
+
+      // DOM elements
+      const wordEl = document.getElementById('word');
+      const alphabetEl = document.getElementById('alphabet');
+      const messageEl = document.getElementById('message');
+      const restartBtn = document.getElementById('restart');
+      const parts = {
+        head: document.getElementById('head'),
+        body: document.getElementById('body'),
+        leftArm: document.getElementById('left-arm'),
+        rightArm: document.getElementById('right-arm'),
+        leftLeg: document.getElementById('left-leg'),
+        rightLeg: document.getElementById('right-leg')
+      };
+
+      function fetchWords() {
+        // Fetch words from public Google Sheets JSON URL
+        return fetch(sheetPublicJSONUrl)
+          .then(response => {
+            if (!response.ok) throw new Error('Error al obtener palabras de la base de datos.');
+            return response.json();
+          })
+          .then(data => {
+            // Extract words from sheet JSON feed
+            // The JSON structure is a gspread feed. Words should be extracted from the entries.
+            if (!data.feed || !data.feed.entry) throw new Error('Formato inesperado de datos.');
+            // Assuming the words are in a column named "word" or something similar.
+            // We will extract by checking keys starting with "gsx$"
+            const extractedWords = data.feed.entry.map(entry => {
+              for (const key in entry) {
+                if (key.startsWith('gsx$')) {
+                  return entry[key].$t.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                }
+              }
+              return null;
+            }).filter(Boolean);
+            if (extractedWords.length === 0) throw new Error('No se encontraron palabras en la base de datos.');
+            return extractedWords;
+          })
+          .catch(error => {
+            console.error(error);
+            messageEl.textContent = error.message + ' Usando palabras locales.';
+            // fallback words hardcoded
+            return ['AHORCADO', 'PROGRAMACION', 'DESARROLLO', 'JUEGO', 'GITHUB', 'GOOGLE', 'SHEET', 'HANGMAN', 'FRONTEND', 'JAVASCRIPT'];
+          });
+      }
+
+      function randomWord() {
+        return words[Math.floor(Math.random() * words.length)];
+      }
+
+      function displayWord() {
+        const display = word.split('').map(letter => (guessedLetters.has(letter) ? letter : '_')).join(' ');
+        wordEl.textContent = display;
+      }
+
+      function updateHangman() {
+        // Show parts based on wrong guesses
+        const partsOrder = ['head', 'body', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg'];
+        partsOrder.forEach((part, index) => {
+          parts[part].style.visibility = index < wrongGuesses ? 'visible' : 'hidden';
+        });
+      }
+
+      function disableLetterBtn(letter) {
+        const btn = document.getElementById('letter-' + letter);
+        if (btn) {
+          btn.disabled = true;
+          btn.style.cursor = 'default';
+        }
+      }
+
+      function checkWinLose() {
+        if (wrongGuesses >= maxWrongGuesses) {
+          messageEl.textContent = '¡Has perdido! La palabra era: ' + word;
+          disableAllButtons();
+          return true;
+        }
+        const won = word.split('').every(letter => guessedLetters.has(letter));
+        if (won) {
+          messageEl.textContent = '¡Felicidades! ¡Ganaste!';
+          disableAllButtons();
+          return true;
+        }
+        return false;
+      }
+
+      function disableAllButtons() {
+        alphabet.forEach(letter => {
+          disableLetterBtn(letter);
+        });
+      }
+
+      function letterClick(letter) {
+        if (guessedLetters.has(letter)) return;
+        guessedLetters.add(letter);
+        disableLetterBtn(letter);
+
+        if (word.includes(letter)) {
+          displayWord();
+          if (checkWinLose()) return;
+          messageEl.textContent = '¡Bien! La letra "' + letter + '" está en la palabra.';
+        } else {
+          wrongGuesses++;
+          updateHangman();
+          if (checkWinLose()) return;
+          messageEl.textContent = 'La letra "' + letter + '" no está en la palabra. Intentos restantes: ' + (maxWrongGuesses - wrongGuesses);
+        }
+      }
+
+      function setupAlphabet() {
+        alphabetEl.innerHTML = '';
+        alphabet.forEach(letter => {
+          const btn = document.createElement('button');
+          btn.textContent = letter;
+          btn.id = 'letter-' + letter;
+          btn.className = 'letter-button';
+          btn.type = 'button';
+          btn.addEventListener('click', () => letterClick(letter));
+          alphabetEl.appendChild(btn);
+        });
+      }
+
+      function restartGame() {
+        word = randomWord();
+        guessedLetters.clear();
+        wrongGuesses = 0;
+        messageEl.textContent = 'Adivina la palabra.';
+        updateHangman();
+        displayWord();
+        setupAlphabet();
+      }
+
+      // Initialization
+      fetchWords().then(fetchedWords => {
+        words = fetchedWords;
+        setupAlphabet();
+        restartGame();
+      });
+
+      restartBtn.addEventListener('click', restartGame);
+    })();
+  </script>
+</body>
+</html>
+
